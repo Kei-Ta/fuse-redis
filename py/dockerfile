@@ -1,0 +1,27 @@
+# スリムなPythonイメージをベースに使用
+FROM python:3.11-slim
+
+# 環境変数の設定
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 必要なパッケージをインストール
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fuse \
+    redis-server \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Pythonパッケージのインストール
+RUN pip install --no-cache-dir fusepy redis
+
+# FUSEを使ったRedisのファイルシステムを実行するためのスクリプトを追加
+COPY main.py /app/main.py
+
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# マウントポイントのディレクトリを作成
+RUN mkdir /mnt/redis
+
+# スクリプトを実行
+CMD ["sh", "-c", "service redis-server start && python main.py"]
